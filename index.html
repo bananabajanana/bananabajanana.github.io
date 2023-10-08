@@ -1,14 +1,95 @@
-<html>
-    <head>
-        <style>
-            body {
-                margin: 0;
-            }
-        </style>
-    </head>
-    <body>
-        <canvas id="gui" width="500" height="500"></canvas>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Cat image with GPU.js</title>
+  <script src="dist/gpu-browser.min.js"></script>
+  <style>
+    body {
+        margin:0;
+        overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+</body>
+<script>
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const gpu = new GPU.GPU();
+    var cx = 0;
+    var cy = 0;
+    var left = false;
+    var right = false;
+    var down = false;
+    var up = false;
+  
+    window.onload = () => {
+        document.addEventListener("keydown", keyDown);
+        document.addEventListener("keyup", keyUp);
 
-        <script src="renderer.js"></script>
-    </body>
+        window.requestAnimationFrame(manageframe);
+    }
+
+    const multiplyMatrix = gpu.createKernel(function(width, height, cx, cy) {
+        let x = this.thread.x;
+        let y = this.thread.y;
+        if(x > cx && y > cy) {
+            let r = x/width;
+            let g = y/height;
+            this.color(r,g,0);
+        } else {
+            this.color(0,0,0);
+        }
+    }).setOutput([width, height]).setGraphical(true);
+
+    const manageframe = () => {
+        frameLogic();
+        multiplyMatrix(width, height, cx, cy);
+        document.getElementsByTagName('body')[0].appendChild(multiplyMatrix.canvas);
+
+        window.requestAnimationFrame(manageframe);
+    }
+
+    const frameLogic = () => {
+        if(left) {
+            cx--;
+        }
+        if (right) {
+            cx++;
+        }
+        if(up) {
+            cy++;
+        }
+        if (down) {
+            cy--;
+        }
+    }
+    
+    const keyDown = (e) => {
+        console.log(e.keyCode);
+        switch(e.keyCode) {
+            case 65:
+            case 37: left = true; break;
+            case 68:
+            case 39: right = true; break;
+            case 83:
+            case 40: down = true; break;
+            case 87:
+            case 38: up = true; break;
+        }
+    }
+    const keyUp = (e) => {
+        switch(e.keyCode) {
+            case 65:
+            case 37: left = false; break;
+            case 68:
+            case 39: right = false; break;
+            case 83:
+            case 40: down = false; break;
+            case 87:
+            case 38: up = false; break;
+        }
+    }
+</script>
 </html>
